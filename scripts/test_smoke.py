@@ -48,3 +48,15 @@ def test_colab_bundles_are_valid_and_current():
     for tier, path in (("T4", "Lab22_DPO_T4.ipynb"), ("BIGGPU", "Lab22_DPO_BigGPU.ipynb")):
         on_disk = json.loads((REPO / "colab" / path).read_text(encoding="utf-8"))
         assert on_disk == render(tier), f"colab/{path} is stale: run `make colab`"
+
+
+def test_core_colab_has_all_required_stages_and_no_bonus():
+    from build_colab import render
+
+    nb = render("T4", core_only=True)
+    headers = ["".join(c["source"]) for c in nb["cells"] if c["cell_type"] == "markdown" and "notebooks/" in "".join(c["source"])]
+    stages = [h for h in headers if h.startswith("---\n# ⏵")]
+    for stem in ["00_dpo_loss_from_scratch", "01_sft_mini", "02_preference_data", "03_dpo_train", "04_compare_and_eval"]:
+        assert any(f"notebooks/{stem}.py" in h for h in stages)
+    assert len(stages) == 5
+    assert all("(bonus)" not in h for h in stages)

@@ -93,9 +93,12 @@ RELEASE_GPU = (
 )
 
 
-def render(tier: str) -> dict:
+def render(tier: str, core_only: bool = False) -> dict:
     big = tier == "BIGGPU"
-    pins = " ".join(f'"{s}"' for s in requirements())
+    specs = requirements()
+    if core_only:
+        specs = [s for s in specs if not s.startswith(("llama-cpp-python", "lm-eval"))]
+    pins = " ".join(f'"{s}"' for s in specs)
     cells = [
         md(
             f"# Lab 22 — DPO/ORPO Alignment ({'BigGPU' if big else 'T4'} tier)\n\n"
@@ -129,7 +132,8 @@ def render(tier: str) -> dict:
     for module in sorted((REPO / "lab22").glob("*.py")):
         body = module.read_text(encoding="utf-8")
         cells.append(code(f"%%writefile {WORKDIR}/lab22/{module.name}\n{body}"))
-    for i, (stem, kind) in enumerate(STAGES):
+    stages = [(stem, kind) for stem, kind in STAGES if not core_only or "bonus" not in kind]
+    for i, (stem, kind) in enumerate(stages):
         if i:
             # One Colab kernel runs every stage, so drop the previous stage's GPU objects.
             cells.append(code(RELEASE_GPU))
@@ -151,11 +155,14 @@ def render(tier: str) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--check", action="store_true", help="fail if colab/*.ipynb differ from the sources")
+    parser.add_argument("--core-only", action="store_true", help="build separate NB0-NB4 notebooks for Run all without bonus training")
     args = parser.parse_args()
     stale = []
     for tier, name in TARGETS.items():
+        if args.core_only:
+            name = name.replace(".ipynb", "_CORE.ipynb")
         path = REPO / "colab" / name
-        nb = render(tier)
+        nb = render(tier, core_only=args.core_only)
         if args.check:
             if not path.exists() or json.loads(path.read_text(encoding="utf-8")) != nb:
                 stale.append(name)
