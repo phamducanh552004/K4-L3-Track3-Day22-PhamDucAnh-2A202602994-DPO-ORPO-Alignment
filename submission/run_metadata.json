@@ -1,0 +1,15 @@
+{
+  "training_metrics": {
+    "train_runtime": 1803.5364,
+    "train_samples_per_second": 0.444,
+    "train_steps_per_second": 0.055,
+    "total_flos": 1.3355440930351104e+16,
+    "train_loss": 0.6736902236938477,
+    "epoch": 1.0
+  },
+  "gpu": "Tesla T4",
+  "torch": "2.11.0+cu130",
+  "root": "/content/drive/MyDrive/Lab22-PhamDucAnh-2A202602994/run",
+  "seed": 42,
+  "scope": "NB0-NB4; no bonuses"
+}
